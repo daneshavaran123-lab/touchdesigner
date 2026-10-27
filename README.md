@@ -1,7 +1,8 @@
 # TouchDesigner + Claude Code
 
-این ریپو Claude Code را از طریق [touchdesigner-mcp](https://github.com/8beeeaaat/touchdesigner-mcp) به TouchDesigner وصل می‌کند.
-فایل `.mcp.json` سرور MCP را برای همین پوشه تعریف می‌کند.
+این ریپو Claude Code را با پلاگین رسمی [touchdesigner-mcp](https://github.com/8beeeaaat/touchdesigner-mcp) به TouchDesigner وصل می‌کند.
+فایل `.claude/settings.json` بازارچهٔ `touchdesigner-mcp` و پلاگین `touchdesigner` را برای این پوشه فعال می‌کند.
+پلاگین خودش سرور MCP را همراه دارد، پس `.mcp.json` جداگانه لازم نیست (و نباید اضافه شود).
 
 ## پیش‌نیازها
 
@@ -14,24 +15,51 @@
 1. فایل `touchdesigner-mcp-td.zip` را از
    [آخرین نسخه](https://github.com/8beeeaaat/touchdesigner-mcp/releases/latest/download/touchdesigner-mcp-td.zip)
    دانلود و از حالت فشرده خارج کنید. ساختار پوشه را تغییر ندهید.
-2. فایل `mcp_webserver_base.tox` را داخل پروژهٔ TouchDesigner بکشید (مثلاً در `/project1/mcp_webserver_base`).
-3. مطمئن شوید WebServer DAT داخل آن روشن است. پورت پیش‌فرض `9981` است.
-   برای دیدن لاگ‌ها Textport را باز کنید (`Alt+T`).
-4. این ریپو را روی کامپیوتر خودتان clone کنید و داخل پوشه‌اش `claude` را اجرا کنید.
-   Claude Code سرور `touchdesigner` را از `.mcp.json` پیشنهاد می‌دهد؛ آن را تأیید کنید.
-5. با دستور `/mcp` بررسی کنید که سرور `touchdesigner` وصل شده است.
+2. فایل `mcp_webserver_base.tox` را داخل پروژهٔ TouchDesigner بکشید (مثلاً در `/project1`).
+   WebServer DAT داخل آن باید روی `http://127.0.0.1:9981` روشن باشد.
+3. این ریپو را روی کامپیوتر خودتان clone کنید و داخل پوشه‌اش `claude` را اجرا کنید.
+4. پوشه را trust کنید و نصب بازارچه و پلاگین `touchdesigner` را تأیید کنید.
+   اگر پیشنهادی نیامد، دستی نصب کنید:
+
+   ```bash
+   claude plugin marketplace add 8beeeaaat/touchdesigner-mcp
+   claude plugin install touchdesigner@touchdesigner-mcp
+   ```
+
+5. یک جلسهٔ تازه باز کنید و `/touchdesigner:setup` را بزنید تا اتصال بررسی شود.
 
 اگر می‌خواهید از اپ Claude Code (موبایل یا وب) کار کنید، داخل همین پوشه `claude remote-control` را اجرا کنید.
 
-## نکته‌ها
+## دستورها
 
-- **ویندوز:** اگر سرور وصل نشد، در `.mcp.json` مقدار `command` را `cmd` بگذارید و `"/c", "npx"` را به اول `args` اضافه کنید.
-- اگر TouchDesigner روی پورت یا آدرس دیگری است، مقدار `--host` و `--port` را در `.mcp.json` عوض کنید.
-- اگر اتصال قطع شود، کلاینت خطا را ۶۰ ثانیه نگه می‌دارد و بعد دوباره امتحان می‌کند.
+| دستور | کار |
+|---|---|
+| `/touchdesigner:launch [tox-path]` | اجرای TouchDesigner با کامپوننت MCP و صبر تا اتصال برقرار شود |
+| `/touchdesigner:setup` | بررسی و تعمیر اتصال |
+| `/touchdesigner:debug [node-path]` | بررسی خطاهای نودها |
+| `/touchdesigner:snapshot [top-path]` | گرفتن تصویر از خروجی یک TOP |
+| `/touchdesigner:overview [root-path]` | گزارش ساختار پروژه |
+| `/touchdesigner:perf [root-path]` | اندازه‌گیری زمان cook و پیدا کردن کندترین نودها |
 
-## ابزارهایی که Claude در دسترس دارد
+بقیه کارها را می‌توانید عادی بنویسید، مثلاً «یک noise TOP بساز و به level TOP وصل کن».
 
-ساخت و حذف نود (`create_td_node`، `delete_td_node`)، خواندن و تغییر پارامترها
-(`get_td_node_parameters`، `update_td_node_parameters`)، فهرست نودها (`get_td_nodes`)،
-اجرای پایتون داخل TouchDesigner (`execute_python_script`)، بررسی خطاها (`get_td_node_errors`)،
-گرفتن تصویر از TOPها (`get_top_image`) و ابزارهای دیگر.
+## تنظیمات
+
+اگر TouchDesigner روی آدرس یا پورت دیگری است، موقع فعال شدن پلاگین مقدارش را وارد کنید، یا:
+
+```bash
+claude plugin install touchdesigner@touchdesigner-mcp \
+  --config touchdesigner_host=http://192.168.1.100 \
+  --config touchdesigner_port=9982
+```
+
+`touchdesigner_host` فقط پروتکل و نام میزبان است، بدون پورت و بدون `/` آخر.
+بعد از تغییر تنظیمات `/reload-plugins` را بزنید یا جلسهٔ تازه باز کنید.
+
+## رفع مشکل
+
+| مشکل | بررسی |
+|---|---|
+| `get_td_info` خطا می‌دهد یا ابزارها timeout می‌شوند | TouchDesigner باز است؟ `.tox` وارد شده؟ WebServer DAT روی پورت درست روشن است؟ `/touchdesigner:setup` را بزنید |
+| ابزارها در `/mcp` نیستند | بعد از فعال کردن پلاگین، Claude Code را دوباره باز کنید؛ ببینید `npx` به npm دسترسی دارد |
+| تصویر snapshot سیاه است | خطای نودهای بالادست (`/touchdesigner:debug`) یا رزولوشن صفر TOP |
